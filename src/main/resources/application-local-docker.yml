@@ -13,19 +13,41 @@ spring:
     show-sql: true
     generate-ddl: true
     database-platform: org.hibernate.dialect.MySQLDialect
-  security:
-    user:
-      name: in2test
-      password: in2pass
 
 server:
-  port: 8084
+  port: 8082
 
 in2:
   openapi:
-    local-url: http://localhost:8084
-    dev-url: http://localhost:8084 # TODO - Change
+    local-url: http://localhost:8082
+    dev-url: http://localhost:8082 # TODO - Change
 
 app:
   url:
-    api: http://localhost:8084
+    api: http://localhost:8082
+    verifiable-credential-service-baseurl: http://localhost:8083/api/credentials
+    siop-service-baseurl: http://localhost:8083/api/siop
+
+# Spring Management Configuration - Actuator
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: health, info, loggers, metrics
+      base-path: /
+      path-mapping:
+        health: health
+        info: info
+        loggers: loggers
+        metrics: metrics
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+    info:
+      enabled: true
+    loggers:
+      enabled: true
+    metrics:
+      enabled: true

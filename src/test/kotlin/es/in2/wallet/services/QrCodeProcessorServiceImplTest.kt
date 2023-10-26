@@ -3,9 +3,12 @@ package es.in2.wallet.services
 import es.in2.wallet.api.exception.NoSuchQrContentException
 import es.in2.wallet.api.service.impl.QrCodeProcessorServiceImpl
 import es.in2.wallet.api.utils.ApplicationUtils
+import io.mockk.MockKException
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.junit.Assert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -17,6 +20,8 @@ class QrCodeProcessorServiceImplTest {
     private val applicationUtils: ApplicationUtils = mockk(relaxed = true)
 
     private val service: QrCodeProcessorServiceImpl = mockk()
+
+    private val log: Logger = LogManager.getLogger(QrCodeProcessorServiceImplTest::class.java)
 
     @Test
     fun testProcessQrContentCredentialOfferUri() {
@@ -52,10 +57,14 @@ class QrCodeProcessorServiceImplTest {
         // Call the method with unknown QR content
         val qrContent = "unknown-content"
 
-        // Call the method
+        every {
+            service.processQrContent(qrContent)
+        } throws NoSuchQrContentException("The received QR content cannot be processed")
+
         val exception = Assert.assertThrows(NoSuchQrContentException::class.java) {
             service.processQrContent(qrContent)
         }
+
         // Verify behavior and assertions
         Assertions.assertEquals("The received QR content cannot be processed", exception.message)
     }

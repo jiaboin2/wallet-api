@@ -15,16 +15,16 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
 
 server:
-  port: 8082
+  port: 8084
 
 in2:
   openapi:
-    local-url: http://localhost:8082
-    dev-url: http://localhost:8082 # TODO - Change
+    local-url: http://localhost:8084
+    dev-url: http://localhost:8084 # TODO - Change
 
 app:
   url:
-    api: http://localhost:8082 # TODO - Change
+    api: http://localhost:8084 # TODO - Change
     verifiable-credential-service-baseurl: http://localhost:8083/api/credentials
     siop-service-baseurl: http://localhost:8083/api/siop
 

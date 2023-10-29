@@ -1,5 +1,6 @@
 package es.in2.wallet.api.service.impl
 
+import es.in2.wallet.api.exception.NoAuthorizationFoundException
 import es.in2.wallet.api.exception.NoSuchQrContentException
 import es.in2.wallet.api.model.entity.QrType
 import es.in2.wallet.api.service.QrCodeProcessorService
@@ -13,6 +14,8 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.context.request.ServletRequestAttributes
 
 
 @Service
@@ -30,26 +33,42 @@ class QrCodeProcessorServiceImpl(
 
         log.debug("Processing QR content: $qrContent")
 
-
         return when (identifyQrContentType(qrContent)) {
             QrType.SIOP_AUTH_REQUEST_URI -> {
                 log.info("Processing SIOP authentication request URI")
                 val url = siopServiceBaseUrl + GET_SIOP_AUTHENTICATION_URI
-                val headers = listOf( CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON)
+                val token = getAuthorizationToken()
+
+                val headers = listOf(
+                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON,
+                    "Authorization" to "Bearer $token"
+                )
+
                 applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
             }
 
             QrType.SIOP_AUTH_REQUEST -> {
                 log.info("Processing SIOP authentication request")
                 val url = siopServiceBaseUrl + PROCESS_SIOP_AUTHENTICATION_REQUEST
-                val headers = listOf( CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON)
+                val token = getAuthorizationToken()
+
+                val headers = listOf(
+                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON,
+                    "Authorization" to "Bearer $token"
+                )
                 applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
             }
 
             QrType.CREDENTIAL_OFFER_URI -> {
                 log.info("Processing verifiable credential offer URI")
                 val url = verifiableCredentialServiceBaseUrl + GET_CREDENTIAL_ISSUER_METADATA
-                val headers = listOf( CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON)
+
+                val token = getAuthorizationToken()
+
+                val headers = listOf(
+                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON,
+                    "Authorization" to "Bearer $token"
+                )
                 applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
             }
 
@@ -64,6 +83,22 @@ class QrCodeProcessorServiceImpl(
                 throw NoSuchQrContentException(errorMessage)
             }
         }
+    }
+
+    private fun getAuthorizationToken(): String {
+        // Retrieve the current request
+        val requestAttributes = RequestContextHolder.getRequestAttributes() as ServletRequestAttributes
+        val request = requestAttributes.request
+
+        // Get the Authorization header
+        val authorizationHeader = request.getHeader("Authorization")
+
+        if (authorizationHeader.isNullOrEmpty() || !authorizationHeader.startsWith("Bearer ")) {
+            val errorMessage = "No Bearer token found in Authorization header"
+            log.warn(errorMessage)
+            throw NoAuthorizationFoundException(errorMessage)
+        }
+        return authorizationHeader.substring(7) // 7 is the length of "Bearer "
     }
 
     private fun identifyQrContentType(content: String): QrType {

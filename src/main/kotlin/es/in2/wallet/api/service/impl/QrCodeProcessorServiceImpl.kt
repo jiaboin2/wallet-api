@@ -3,12 +3,7 @@ package es.in2.wallet.api.service.impl
 import es.in2.wallet.api.exception.NoSuchQrContentException
 import es.in2.wallet.api.model.entity.QrType
 import es.in2.wallet.api.service.QrCodeProcessorService
-import es.in2.wallet.api.utils.CONTENT_TYPE
-import es.in2.wallet.api.utils.CONTENT_TYPE_APPLICATION_JSON
-import es.in2.wallet.api.utils.ApplicationUtils
-import es.in2.wallet.api.utils.GET_CREDENTIAL_ISSUER_METADATA
-import es.in2.wallet.api.utils.GET_SIOP_AUTHENTICATION_URI
-import es.in2.wallet.api.utils.PROCESS_SIOP_AUTHENTICATION_REQUEST
+import es.in2.wallet.api.utils.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Value
@@ -18,22 +13,21 @@ import org.springframework.stereotype.Service
 @Service
 class QrCodeProcessorServiceImpl(
 
-        @Value("\${app.url.verifiable-credential-service-baseurl}") private val verifiableCredentialServiceBaseUrl: String,
-        @Value("\${app.url.siop-service-baseurl}") private val siopServiceBaseUrl: String,
+        @Value("\${app.url.wca-baseurl}") private val wcaBaseUrl: String,
         private val applicationUtils: ApplicationUtils
 
 ) : QrCodeProcessorService {
 
     private val log: Logger = LogManager.getLogger(QrCodeProcessorServiceImpl::class.java)
 
-    override fun processQrContent(qrContent: String): Any {
+    override fun processQrContent(qrContent: String, token: String): Any {
 
         log.debug("Processing QR content: $qrContent")
 
         return when (identifyQrContentType(qrContent)) {
             QrType.SIOP_AUTH_REQUEST_URI -> {
                 log.info("Processing SIOP authentication request URI")
-                val url = siopServiceBaseUrl + GET_SIOP_AUTHENTICATION_URI
+                val url = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
 
                 val headers = listOf(
                     CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
@@ -44,7 +38,7 @@ class QrCodeProcessorServiceImpl(
 
             QrType.SIOP_AUTH_REQUEST -> {
                 log.info("Processing SIOP authentication request")
-                val url = siopServiceBaseUrl + PROCESS_SIOP_AUTHENTICATION_REQUEST
+                val url = wcaBaseUrl + PROCESS_SIOP_AUTHENTICATION_REQUEST
 
                 val headers = listOf(
                     CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
@@ -54,10 +48,11 @@ class QrCodeProcessorServiceImpl(
 
             QrType.CREDENTIAL_OFFER_URI -> {
                 log.info("Processing verifiable credential offer URI")
-                val url = verifiableCredentialServiceBaseUrl + GET_CREDENTIAL_ISSUER_METADATA
+                val url = wcaBaseUrl + GET_CREDENTIAL_ISSUER_METADATA
 
                 val headers = listOf(
-                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
+                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON,
+                    HEADER_AUTHORIZATION to "Bearer $token"
                 )
                 applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
             }

@@ -22,4 +22,11 @@ class ApiExceptionHandlerTest {
         Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
 
+    @Test
+    fun testHandleNoAuthorizationFoundException() {
+        val exception = NoSuchQrContentException("No Authorization")
+        val response = ApiExceptionHandler().handleNoAuthorizationFoundException(exception)
+        Assertions.assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
 }

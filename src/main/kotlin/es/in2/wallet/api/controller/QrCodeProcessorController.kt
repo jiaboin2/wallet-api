@@ -1,10 +1,12 @@
 package es.in2.wallet.api.controller
 
+import es.in2.wallet.api.exception.NoAuthorizationFoundException
 import es.in2.wallet.api.model.dto.QrContentDTO
 import es.in2.wallet.api.service.QrCodeProcessorService
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
@@ -19,9 +21,14 @@ class QrCodeProcessorController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun executeQrContent(@RequestBody qrContentDTO: QrContentDTO): Any {
+    fun executeQrContent(@RequestHeader(HttpHeaders.AUTHORIZATION) authorizationHeader: String, @RequestBody qrContentDTO: QrContentDTO): Any {
+        if (authorizationHeader.isEmpty() || !authorizationHeader.startsWith("Bearer ")) {
+            val errorMessage = "No Bearer token found in Authorization header"
+            throw NoAuthorizationFoundException(errorMessage)
+        }
+        val token = authorizationHeader.substring(7)
         log.info("QrCodeProcessorController.executeQrContent()")
-        return qrCodeProcessorService.processQrContent(qrContentDTO.content)
+        return qrCodeProcessorService.processQrContent(qrContentDTO.content, token)
     }
 
 }

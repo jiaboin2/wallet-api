@@ -30,13 +30,15 @@ class QrCodeProcessorServiceImpl(
         return when (identifyQrContentType(qrContent)) {
             QrType.SIOP_AUTH_REQUEST_URI -> {
                 log.info("Processing SIOP authentication request URI")
-                //val url = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
+                val url = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
 
-                //val headers = listOf(
-                //    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
-                //)
+                val headers = listOf(
+                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON,
+                    HEADER_AUTHORIZATION to "Bearer $token"
+                )
 
-                //applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
+                applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
+                /*
                 val redirectUrl = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
                 val responseBody = "{\"qr_content\":\"$qrContent\"}"
 
@@ -44,6 +46,8 @@ class QrCodeProcessorServiceImpl(
                 headers.add("Location", redirectUrl)
 
                 return ResponseEntity(responseBody, headers, HttpStatus.FOUND)
+
+                 */
             }
 
             QrType.SIOP_AUTH_REQUEST -> {

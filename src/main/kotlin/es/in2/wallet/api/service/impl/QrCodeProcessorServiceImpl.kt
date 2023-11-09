@@ -7,6 +7,9 @@ import es.in2.wallet.api.utils.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 
 
@@ -27,13 +30,20 @@ class QrCodeProcessorServiceImpl(
         return when (identifyQrContentType(qrContent)) {
             QrType.SIOP_AUTH_REQUEST_URI -> {
                 log.info("Processing SIOP authentication request URI")
-                val url = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
+                //val url = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
 
-                val headers = listOf(
-                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
-                )
+                //val headers = listOf(
+                //    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
+                //)
 
-                applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
+                //applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
+                val redirectUrl = wcaBaseUrl + GET_SIOP_AUTHENTICATION_URI
+                val responseBody = "{\"qr_content\":\"$qrContent\"}"
+
+                val headers = HttpHeaders()
+                headers.add("Location", redirectUrl)
+
+                return ResponseEntity(responseBody, headers, HttpStatus.FOUND)
             }
 
             QrType.SIOP_AUTH_REQUEST -> {
@@ -41,7 +51,8 @@ class QrCodeProcessorServiceImpl(
                 val url = wcaBaseUrl + PROCESS_SIOP_AUTHENTICATION_REQUEST
 
                 val headers = listOf(
-                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON
+                    CONTENT_TYPE to CONTENT_TYPE_APPLICATION_JSON,
+                    HEADER_AUTHORIZATION to "Bearer $token"
                 )
                 applicationUtils.postRequest(url=url, headers = headers, body = "{\"qr_content\":\"$qrContent\"}")
             }
